@@ -13,12 +13,11 @@ public class hello {
     WebClient webClient;
 
     @GetMapping("/")
-    public String index() throws URISyntaxException, IOException, InterruptedException {
+    public Mono<String> index() throws URISyntaxException, IOException, InterruptedException {
         Mono<String> result = webClient.get().uri("https://api.coindesk.com/v1/bpi/currentprice.json")
                 .retrieve()
                 .bodyToMono(String.class);
-        String response = result.block();
-        return response;
+        return result;
     }
 }
 
