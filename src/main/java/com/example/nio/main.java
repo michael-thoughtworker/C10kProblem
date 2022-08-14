@@ -21,17 +21,16 @@ import java.util.logging.Logger;
 
 public class main {
 
-    static  HttpClient client = HttpClient.newHttpClient();
+    static HttpClient client = HttpClient.newHttpClient();
     private static final String TEAPOT_HTTP_RESP_STR =
             "HTTP/1.0 200 OK\r\n" +
-                    "Content-Length: 19\r\n" +
+                    "Content-Length: 679\r\n" +
                     "Content-Type: application/json\r\n" +
-                    "Server: java-nio\r\n\r\n" +
-                    "{status: \"success\"}";
+                    "Server: java-nio\r\n\r\n";
     private static final byte[] TEAPOT_HTTP_RESP_BYTES = TEAPOT_HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8);
 
     private static final String HOSTNAME = "0.0.0.0";
-    private static final int HTTP_PORT = 8090;
+    private static final int HTTP_PORT = 8092;
     private static final Logger LOGGER = Logger.getLogger("test server");
 
     public static void main(String[] args) throws IOException {
@@ -39,8 +38,7 @@ public class main {
         addShutdownHook(isShuttingDown);
 
         try (var serverSocketChannel = ServerSocketChannel.open();
-             var selector = Selector.open())
-        {
+             var selector = Selector.open()) {
 
             serverSocketChannel.configureBlocking(false); // use non-blocking io
 
@@ -53,23 +51,18 @@ public class main {
             while (!isShuttingDown.get()) {
                 try {
                     if (selector.select() < 1) { // selector.select() method is blocking method (waits for new events)
-                        // no new events
-                        // for examples in case of selector.wakeup() invocation
                         continue;
                     }
                     var selectedKeysIterator = selector.selectedKeys().iterator();
                     while (selectedKeysIterator.hasNext()) {
                         var selectionKey = selectedKeysIterator.next();
-                        selectedKeysIterator.remove(); // do not forget to remove
+                        selectedKeysIterator.remove();
 
                         if (selectionKey.isAcceptable()) {
-                            // handle ACCEPT event on server's socket channel
                             handleAccept(selectionKey, selector);
                         } else if (selectionKey.isReadable()) {
-                            // handle READ event on client's socket channel
                             handleRead(selectionKey);
                         } else if (selectionKey.isWritable()) {
-                            // handle WRITE event on client's socket channel
                             handleWrite(selectionKey);
                         }
                     }
@@ -92,12 +85,10 @@ public class main {
             }
             socketChannel.configureBlocking(false); // use non-blocking io for client's channel
 
-            // listen for READ events
             socketChannel.register(selector, SelectionKey.OP_READ, new ChannelAttachment());
 
-//            LOGGER.info("Connection from " + socketChannel.getRemoteAddress() + " accepted");
         } catch (Exception e) {
-//            LOGGER.log(Level.SEVERE, "Error in `handleAccept`", e);
+            e.printStackTrace();
         }
     }
 
@@ -116,8 +107,6 @@ public class main {
             }
 
             if (read == -1) {
-                // seems we need to close channel
-//                LOGGER.info("Got CLOSE from " + socketChannel.getRemoteAddress());
                 httpMessageParser.clearState();
                 selectionKey.attach(null);
                 selectionKey.cancel();
@@ -141,36 +130,32 @@ public class main {
                     .uri(new URI("https://api.coindesk.com/v1/bpi/currentprice.json"))
                     .GET()
                     .build();
-            CompletableFuture< HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
-
-            response.supplyAsync(() -> {
-                try {
-                    var respByteBuf = ByteBuffer.wrap(TEAPOT_HTTP_RESP_BYTES);
-                    int remaining = respByteBuf.remaining();
-                    int write = socketChannel.write(respByteBuf);
-                    if (write < remaining) {
-                        channelAttachment.setRespByteBuffer(respByteBuf);
-                        // register also for WRITE events
-                        // we will write remaining bytes when socket will be ready for writing
-                        selectionKey.interestOpsOr(SelectionKey.OP_WRITE);
-                    } else {
-//                LOGGER.info("Teapot http response has been sent to " + remoteAddress);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return "Rajeev";
-            }).thenApply(name -> {
-                return "Hello " + name;
-            }).thenApply(greeting -> {
-                return greeting + ", Welcome to the CalliCoder Blog";
-            });
-
+            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(res -> {
+                        final String HTTP_RESP_STR =
+                                "HTTP/1.0 200 OK\r\n" +
+                                        "Content-Length: "+res.body().length()+"\r\n" +
+                                        "Content-Type: application/json\r\n" +
+                                        "Server: java-nio\r\n\r\n"+
+                                        res.body();
+                        var respByteBuf = ByteBuffer.wrap((TEAPOT_HTTP_RESP_STR + res.body()).getBytes(StandardCharsets.UTF_8));
+                        int remaining = respByteBuf.remaining();
+                        int write = 0;
+                        try {
+                            write = socketChannel.write(respByteBuf);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (write < remaining) {
+                            channelAttachment.setRespByteBuffer(respByteBuf);
+                            selectionKey.interestOpsOr(SelectionKey.OP_WRITE);
+                        }
+                        return "";
+                    });
 
 
         } catch (Exception e) {
-//            LOGGER.log(Level.SEVERE, "Error in `handleRead`", e);
+            e.printStackTrace();
         }
     }
 
@@ -184,14 +169,11 @@ public class main {
             int remaining = respByteBuf.remaining();
             int write = socketChannel.write(respByteBuf);
             if (write == remaining) {
-                // message has been fully sent to the client
-//                LOGGER.info("Teapot http response has been sent to " + remoteAddress);
-                // we don't interested on WRITE events now
                 selectionKey.interestOps(SelectionKey.OP_READ);
                 channelAttachment.setRespByteBuffer(null);
             }
         } catch (Exception e) {
-//            LOGGER.log(Level.SEVERE, "Error in `handleWrite`");
+            e.printStackTrace();
         }
     }
 }
