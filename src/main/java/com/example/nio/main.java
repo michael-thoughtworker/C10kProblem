@@ -123,28 +123,47 @@ public class main {
                     .uri(new URI("https://api.coindesk.com/v1/bpi/currentprice.json"))
                     .GET()
                     .build();
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(res -> {
-                        final String HTTP_RESP_STR =
+//            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+//                    .thenApply(res -> {
+//                        final String HTTP_RESP_STR =
+//                                "HTTP/1.0 200 OK\r\n" +
+//                                        "Content-Length: "+res.body().length()+"\r\n" +
+//                                        "Content-Type: application/json\r\n" +
+//                                        "Server: java-nio\r\n\r\n"+
+//                                        res.body();
+//                        var respByteBuf = ByteBuffer.wrap(HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8));
+//                        int remaining = respByteBuf.remaining();
+//                        int write = 0;
+//                        try {
+//                            write = socketChannel.write(respByteBuf);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        if (write < remaining) {
+//                            channelAttachment.setRespByteBuffer(respByteBuf);
+//                            selectionKey.interestOpsOr(SelectionKey.OP_WRITE);
+//                        }
+//                        return "";
+//                    });
+            String res = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+
+                                    final String HTTP_RESP_STR =
                                 "HTTP/1.0 200 OK\r\n" +
-                                        "Content-Length: "+res.body().length()+"\r\n" +
+                                        "Content-Length: "+res.length()+"\r\n" +
                                         "Content-Type: application/json\r\n" +
                                         "Server: java-nio\r\n\r\n"+
-                                        res.body();
-                        var respByteBuf = ByteBuffer.wrap(HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8));
-                        int remaining = respByteBuf.remaining();
-                        int write = 0;
-                        try {
-                            write = socketChannel.write(respByteBuf);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        if (write < remaining) {
-                            channelAttachment.setRespByteBuffer(respByteBuf);
-                            selectionKey.interestOpsOr(SelectionKey.OP_WRITE);
-                        }
-                        return "";
-                    });
+                                        res;
+            var respByteBuf = ByteBuffer.wrap(HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8));
+            int remaining = respByteBuf.remaining();
+            int write = socketChannel.write(respByteBuf);
+            if (write < remaining) {
+                channelAttachment.setRespByteBuffer(respByteBuf);
+                // register also for WRITE events
+                // we will write remaining bytes when socket will be ready for writing
+                selectionKey.interestOpsOr(SelectionKey.OP_WRITE);
+            } else {
+//                LOGGER.info("Teapot http response has been sent to " + remoteAddress);
+            }
 
 
         } catch (Exception e) {
