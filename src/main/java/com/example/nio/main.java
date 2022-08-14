@@ -131,7 +131,7 @@ public class main {
                                         "Content-Type: application/json\r\n" +
                                         "Server: java-nio\r\n\r\n"+
                                         res.body();
-                        var respByteBuf = ByteBuffer.wrap((TEAPOT_HTTP_RESP_STR + res.body()).getBytes(StandardCharsets.UTF_8));
+                        var respByteBuf = ByteBuffer.wrap(HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8));
                         int remaining = respByteBuf.remaining();
                         int write = 0;
                         try {
