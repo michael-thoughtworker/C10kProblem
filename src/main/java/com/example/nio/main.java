@@ -22,15 +22,8 @@ import java.util.logging.Logger;
 public class main {
 
     static HttpClient client = HttpClient.newHttpClient();
-    private static final String TEAPOT_HTTP_RESP_STR =
-            "HTTP/1.0 200 OK\r\n" +
-                    "Content-Length: 679\r\n" +
-                    "Content-Type: application/json\r\n" +
-                    "Server: java-nio\r\n\r\n";
-    private static final byte[] TEAPOT_HTTP_RESP_BYTES = TEAPOT_HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8);
-
     private static final String HOSTNAME = "0.0.0.0";
-    private static final int HTTP_PORT = 8092;
+    private static final int HTTP_PORT = 8090;
     private static final Logger LOGGER = Logger.getLogger("test server");
 
     public static void main(String[] args) throws IOException {
