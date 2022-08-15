@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,37 +35,26 @@ public class main {
     }
 
     private static void handle(final Socket socket) throws IOException, InterruptedException, URISyntaxException {
-
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-
-        String s;
-        while ((s = in.readLine()) != null) {
-            if (s.isEmpty()) {
-                break;
-            }
-        }
+        InputStream inputStream = socket.getInputStream();
+        OutputStream outputStream = socket.getOutputStream();
+        byte[] buffer = new byte[250];
+        inputStream.read(buffer);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI("https://api.coindesk.com/v1/bpi/currentprice.json"))
                 .GET()
                 .build();
         String response = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+        final String TEAPOT_HTTP_RESP_STR =
+                "HTTP/1.0 200 OK\r\n" +
+                        "Content-Length: "+response.length()+"\r\n" +
+                        "Content-Type: application/json\r\n" +
+                        "Server: java-nio\r\n\r\n" +
+                        response;
+        outputStream.write(TEAPOT_HTTP_RESP_STR.getBytes(StandardCharsets.UTF_8));
+        outputStream.close();
 
-        out.write("HTTP/1.0 200 OK\r\n");
-        out.write("Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n");
-        out.write("Content-Length: "+response.length()+"\r\n");
-        out.write("Content-Type: application/json\r\n");
-        out.write("Expires: Sat, 01 Jan 2000 00:59:59 GMT\r\n");
-        out.write("Last-modified: Fri, 09 Aug 1996 14:21:40 GMT\r\n");
-        out.write("\r\n");
-        out.write(response);
-
-
-        out.close();
-        in.close();
+        inputStream.close();
         socket.close();
     }
 }
