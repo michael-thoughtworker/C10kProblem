@@ -14,7 +14,7 @@ public class main {
 
     static  HttpClient client = HttpClient.newHttpClient();
     public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
-        int port = 8092;
+        int port = 8090;
         final ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("server is listing on " + port);
 
