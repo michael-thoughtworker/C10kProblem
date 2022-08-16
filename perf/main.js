@@ -31,7 +31,7 @@ export default function (data) {
 
         if (check_api == false){
             if (debug === "true")
-                console.log("nio api: status=" + String(init_login_response.status) + "  Body=" + init_login_response.body);
+                console.log("nio api: status=" + String(response.status) + "  Body=" + response.body);
             return
         }
         apiTrend.add(response.timings.duration);
