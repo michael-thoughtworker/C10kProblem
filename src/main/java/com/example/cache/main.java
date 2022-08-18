@@ -11,6 +11,7 @@ public class main {
         final long duration = System.nanoTime() - startTime;
         System.out.println(duration);
 
+        array = new int[ARRAY_SIZE];
         startTime = System.nanoTime();
         for (int i = 0, n = array.length; i < n; i+=16) {
             array[i] *= 3;
