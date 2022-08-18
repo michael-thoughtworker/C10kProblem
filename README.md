@@ -62,3 +62,10 @@ To run performance testing
 cd perf
 k6 run main.js  -e TPS=200 -e DURATION=60s -e DEBUG=false -e VUS=1000
 ```
+
+To montior the system call
+
+```sh
+cd perf
+sudo strace -f  -p 22844 2>&1 | grep -E “22844|clone|HTTP”
+```
