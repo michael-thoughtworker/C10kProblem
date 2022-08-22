@@ -2,7 +2,8 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.network 'private_network', ip: "192.168.56.11",  virtualbox__intnet: true
+  config.vm.network 'private_network', ip: "192.168.56.11"
+  #,  virtualbox__intnet: true
   config.vm.box = "hashicorp/bionic64"
   config.vm.box_version = "1.0.282"
   config.vm.network "forwarded_port", guest: 10000, host: 10000
@@ -11,5 +12,6 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :privileged => false, :path => "scripts/install-bcc.sh"
   config.vm.provider "virtualbox" do |v|
     v.memory = 4096
+    v.cpus = 4
 end
 end
